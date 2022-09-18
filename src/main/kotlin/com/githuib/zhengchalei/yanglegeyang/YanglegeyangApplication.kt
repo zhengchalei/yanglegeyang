@@ -25,11 +25,11 @@ class YanglegeyangApplication {
 
     var client: RestTemplate = RestTemplateBuilder().build()
 
-    @GetMapping("/{uid}")
-    fun go(@PathVariable(required = true) uid: Int): String {
+    @GetMapping("/{uid}/{name}")
+    fun go(@PathVariable(required = true) uid: Int, @PathVariable name: String): String {
         Thread() {
             val userInfo = userInfo(uid.toString())
-            val token = token(userInfo)
+            val token = token(userInfo, name)
             topicGameOver(token)
             for (i in 0 until 1) {
                 gameOver(token)
@@ -38,11 +38,11 @@ class YanglegeyangApplication {
         return "已经开始刷咯!"
     }
 
-    @GetMapping("/{uid}/{count}")
-    fun go(@PathVariable(required = true) uid: String, @PathVariable count: Int): String {
+    @GetMapping("/{uid}/{count}/{name}")
+    fun go(@PathVariable(required = true) uid: String, @PathVariable count: Int, @PathVariable name: String): String {
         Thread() {
             val userInfo = userInfo(uid)
-            val token = token(userInfo)
+            val token = token(userInfo, name)
             topicGameOver(token)
             for (i in 0 until count) {
                 gameOver(token)
@@ -60,11 +60,9 @@ class YanglegeyangApplication {
         return jsonObject
     }
 
-    fun token(userInfo: JSONObject): String {
+    fun token(userInfo: JSONObject, name: String): String {
         val url =
-            "https://cat-match.easygame2021.com/sheep/v1/user/login_oppo?uid=${userInfo.getString("wx_open_id")}&nick_name=${
-                userInfo.getString("nick_name")
-            }&avatar=${userInfo.getString("avatar")}&sex=1"
+            "https://cat-match.easygame2021.com/sheep/v1/user/login_oppo?uid=${userInfo.getString("wx_open_id")}&nick_name=${name}&avatar=${userInfo.getString("avatar")}&sex=1"
         val body = client.postForObject(url, "", String::class.java)
         return JSON.parseObject(body).getJSONObject("data").getString("token")
     }
