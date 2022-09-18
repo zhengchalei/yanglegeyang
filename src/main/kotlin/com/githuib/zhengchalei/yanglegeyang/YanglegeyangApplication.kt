@@ -28,8 +28,21 @@ class YanglegeyangApplication {
 
     val map = ConcurrentHashMap<String, Int>()
 
+    fun check(uid: String) {
+        val count = map[uid]
+        if (count == null) {
+            map[uid] = 1
+        } else if (count > 20) {
+            throw IllegalArgumentException("能不能别一直的怼着我刷, 你去看看GitHub吧")
+        } else {
+            map[uid] = count.plus(1)
+        }
+    }
+
     @GetMapping("/{uid}/{name}")
     fun go(@PathVariable(required = true) uid: Int, @PathVariable name: String): String {
+        check(uid.toString())
+
         val userInfo = userInfo(uid.toString())
         val token = token(userInfo, name)
         Thread() {
@@ -55,13 +68,9 @@ class YanglegeyangApplication {
 //    }
 
     fun userInfo(uid: String): JSONObject {
-        if (map[uid] == null) {
-            map[uid] = 1
-        } else if (map[uid]!! > 20) {
-            throw IllegalArgumentException("能不能别一直的怼着我刷, 你去看看GitHub吧")
-        }
         log.info("count: {}", map.size)
-        val url = "https://cat-match.easygame2021.com/sheep/v1/game/user_info?uid=${uid}&t=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTQ0MDU0MjMsIm5iZiI6MTY2MzMwMzIyMywiaWF0IjoxNjYzMzAxNDIzLCJqdGkiOiJDTTpjYXRfbWF0Y2g6bHQxMjM0NTYiLCJvcGVuX2lkIjoiIiwidWlkIjoxMDg0MzMxMjgsImRlYnVnIjoiIiwibGFuZyI6IiJ9.oT1OY9XokZmHt1Hzifc8ILF1U-xQxY-itXNaeLj02R8"
+        val url =
+            "https://cat-match.easygame2021.com/sheep/v1/game/user_info?uid=${uid}&t=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTQ0MDU0MjMsIm5iZiI6MTY2MzMwMzIyMywiaWF0IjoxNjYzMzAxNDIzLCJqdGkiOiJDTTpjYXRfbWF0Y2g6bHQxMjM0NTYiLCJvcGVuX2lkIjoiIiwidWlkIjoxMDg0MzMxMjgsImRlYnVnIjoiIiwibGFuZyI6IiJ9.oT1OY9XokZmHt1Hzifc8ILF1U-xQxY-itXNaeLj02R8"
         val body = client.getForObject<String>(url)
         val jsonObject = JSON.parseObject(body).getJSONObject("data")
         log.info("刷的人: {}", jsonObject)
