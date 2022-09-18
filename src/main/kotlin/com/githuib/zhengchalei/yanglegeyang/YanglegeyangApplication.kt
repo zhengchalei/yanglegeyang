@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.getForObject
+import java.util.concurrent.ConcurrentHashMap
 
 
 @RestController
@@ -25,11 +26,13 @@ class YanglegeyangApplication {
 
     var client: RestTemplate = RestTemplateBuilder().build()
 
+    val map = ConcurrentHashMap<String, Int>()
+
     @GetMapping("/{uid}/{name}")
     fun go(@PathVariable(required = true) uid: Int, @PathVariable name: String): String {
+        val userInfo = userInfo(uid.toString())
+        val token = token(userInfo, name)
         Thread() {
-            val userInfo = userInfo(uid.toString())
-            val token = token(userInfo, name)
             topicGameOver(token)
             for (i in 0 until 1) {
                 gameOver(token)
@@ -38,22 +41,27 @@ class YanglegeyangApplication {
         return "已经开始刷咯!"
     }
 
-    @GetMapping("/{uid}/{count}/{name}")
-    fun go(@PathVariable(required = true) uid: String, @PathVariable count: Int, @PathVariable name: String): String {
-        Thread() {
-            val userInfo = userInfo(uid)
-            val token = token(userInfo, name)
-            topicGameOver(token)
-            for (i in 0 until count) {
-                gameOver(token)
-            }
-        }.start()
-        return "已经开始刷咯, 隐藏的小技巧被你发现了!"
-    }
+//    @GetMapping("/{uid}/{count}/{name}")
+//    fun go(@PathVariable(required = true) uid: String, @PathVariable count: Int, @PathVariable name: String): String {
+//        val userInfo = userInfo(uid)
+//        val token = token(userInfo, name)
+//        Thread() {
+//            topicGameOver(token)
+//            for (i in 0 until count) {
+//                gameOver(token)
+//            }
+//        }.start()
+//        return "已经开始刷咯, 隐藏的小技巧被你发现了!"
+//    }
 
     fun userInfo(uid: String): JSONObject {
-        val url =
-            "https://cat-match.easygame2021.com/sheep/v1/game/user_info?uid=${uid}&t=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTQ0MDU0MjMsIm5iZiI6MTY2MzMwMzIyMywiaWF0IjoxNjYzMzAxNDIzLCJqdGkiOiJDTTpjYXRfbWF0Y2g6bHQxMjM0NTYiLCJvcGVuX2lkIjoiIiwidWlkIjoxMDg0MzMxMjgsImRlYnVnIjoiIiwibGFuZyI6IiJ9.oT1OY9XokZmHt1Hzifc8ILF1U-xQxY-itXNaeLj02R8"
+        if (map[uid] == null) {
+            map[uid] = 1
+        } else if (map[uid]!! > 20) {
+            throw IllegalArgumentException("能不能别一直的怼着我刷, 你去看看GitHub吧")
+        }
+        log.info("count: {}", map.size)
+        val url = "https://cat-match.easygame2021.com/sheep/v1/game/user_info?uid=${uid}&t=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTQ0MDU0MjMsIm5iZiI6MTY2MzMwMzIyMywiaWF0IjoxNjYzMzAxNDIzLCJqdGkiOiJDTTpjYXRfbWF0Y2g6bHQxMjM0NTYiLCJvcGVuX2lkIjoiIiwidWlkIjoxMDg0MzMxMjgsImRlYnVnIjoiIiwibGFuZyI6IiJ9.oT1OY9XokZmHt1Hzifc8ILF1U-xQxY-itXNaeLj02R8"
         val body = client.getForObject<String>(url)
         val jsonObject = JSON.parseObject(body).getJSONObject("data")
         log.info("刷的人: {}", jsonObject)
@@ -62,7 +70,11 @@ class YanglegeyangApplication {
 
     fun token(userInfo: JSONObject, name: String): String {
         val url =
-            "https://cat-match.easygame2021.com/sheep/v1/user/login_oppo?uid=${userInfo.getString("wx_open_id")}&nick_name=${name}&avatar=${userInfo.getString("avatar")}&sex=1"
+            "https://cat-match.easygame2021.com/sheep/v1/user/login_oppo?uid=${userInfo.getString("wx_open_id")}&nick_name=${name}&avatar=${
+                userInfo.getString(
+                    "avatar"
+                )
+            }&sex=1"
         val body = client.postForObject(url, "", String::class.java)
         return JSON.parseObject(body).getJSONObject("data").getString("token")
     }
