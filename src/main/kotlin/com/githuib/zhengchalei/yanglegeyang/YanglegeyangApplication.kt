@@ -28,7 +28,7 @@ class YanglegeyangApplication {
 
     val map = ConcurrentHashMap<String, Int>()
 
-    fun check(uid: String) {
+    fun check(uid: String): Int {
         val count = map[uid]
         if (count == null) {
             map[uid] = 1
@@ -37,12 +37,13 @@ class YanglegeyangApplication {
         } else {
             map[uid] = count.plus(1)
         }
+        return count ?: return 1
     }
 
     @GetMapping("/{uid}/{name}")
     fun go(@PathVariable(required = true) uid: Int, @PathVariable name: String): String {
-        check(uid.toString())
-
+        val count = check(uid.toString())
+        log.info("map size: {}, uid: {}, count: {}", map.size, uid, count)
         val userInfo = userInfo(uid.toString())
         val token = token(userInfo, name)
         Thread() {
@@ -68,7 +69,6 @@ class YanglegeyangApplication {
 //    }
 
     fun userInfo(uid: String): JSONObject {
-        log.info("count: {}", map.size)
         val url =
             "https://cat-match.easygame2021.com/sheep/v1/game/user_info?uid=${uid}&t=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTQ0MDU0MjMsIm5iZiI6MTY2MzMwMzIyMywiaWF0IjoxNjYzMzAxNDIzLCJqdGkiOiJDTTpjYXRfbWF0Y2g6bHQxMjM0NTYiLCJvcGVuX2lkIjoiIiwidWlkIjoxMDg0MzMxMjgsImRlYnVnIjoiIiwibGFuZyI6IiJ9.oT1OY9XokZmHt1Hzifc8ILF1U-xQxY-itXNaeLj02R8"
         val body = client.getForObject<String>(url)
