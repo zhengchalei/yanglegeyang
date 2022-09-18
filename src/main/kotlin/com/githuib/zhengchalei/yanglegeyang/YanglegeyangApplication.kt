@@ -32,8 +32,6 @@ class YanglegeyangApplication {
         val count = map[uid]
         if (count == null) {
             map[uid] = 1
-        } else if (count > 20) {
-            throw IllegalArgumentException("能不能别一直的怼着我刷, 你去看看GitHub吧")
         } else {
             map[uid] = count.plus(1)
         }
@@ -43,6 +41,7 @@ class YanglegeyangApplication {
     @GetMapping("/{uid}/{name}")
     fun go(@PathVariable(required = true) uid: Int, @PathVariable name: String): String {
         val count = check(uid.toString())
+        if (count > 20) return "能不能别一直的怼着我刷, 你去看看GitHub吧"
         log.info("map size: {}, uid: {}, count: {}", map.size, uid, count)
         val userInfo = userInfo(uid.toString())
         val token = token(userInfo, name)
