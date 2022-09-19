@@ -77,12 +77,8 @@ class YanglegeyangApplication {
     }
 
     fun token(userInfo: JSONObject, name: String): String {
-        val url =
-            "https://cat-match.easygame2021.com/sheep/v1/user/login_oppo?uid=${userInfo.getString("wx_open_id")}&nick_name=${name}&avatar=${
-                userInfo.getString(
-                    "avatar"
-                )
-            }&sex=1"
+        val avatar = "https://thirdwx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTKbPy04717qMxC8NZZx2bEy0bntr59KFibibnAkzx6RGGtGU6ibxZcMwN0PfmWsHj8WXia1WoE9MMiabSw/132"
+        val url = "https://cat-match.easygame2021.com/sheep/v1/user/login_oppo?uid=${userInfo.getString("wx_open_id")}&nick_name=${name}&avatar=${avatar}&sex=1"
         val body = client.postForObject(url, "", String::class.java)
         return JSON.parseObject(body).getJSONObject("data").getString("token")
     }
