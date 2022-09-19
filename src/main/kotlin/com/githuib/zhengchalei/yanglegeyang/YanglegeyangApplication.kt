@@ -12,6 +12,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.getForObject
@@ -39,12 +40,19 @@ class YanglegeyangApplication {
     }
 
     @GetMapping("/{uid}/{name}")
-    fun go(@PathVariable(required = true) uid: Int, @PathVariable name: String): String {
+    fun go(
+        @PathVariable(required = true) uid: Int,
+        @PathVariable name: String,
+        @RequestParam(
+            required = false,
+            defaultValue = "https://thirdwx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTKbPy04717qMxC8NZZx2bEy0bntr59KFibibnAkzx6RGGtGU6ibxZcMwN0PfmWsHj8WXia1WoE9MMiabSw/132"
+        ) avatar: String
+    ): String {
         val count = check(uid.toString())
         if (count > 20) return "能不能别一直的怼着我刷, 你去看看GitHub吧"
         log.info("map size: {}, uid: {}, count: {}", map.size, uid, count)
         val userInfo = userInfo(uid.toString())
-        val token = token(userInfo, name)
+        val token = token(userInfo, name, avatar)
         Thread() {
             topicGameOver(token)
             for (i in 0 until 1) {
@@ -76,9 +84,11 @@ class YanglegeyangApplication {
         return jsonObject
     }
 
-    fun token(userInfo: JSONObject, name: String): String {
-        val avatar = "https://thirdwx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTKbPy04717qMxC8NZZx2bEy0bntr59KFibibnAkzx6RGGtGU6ibxZcMwN0PfmWsHj8WXia1WoE9MMiabSw/132"
-        val url = "https://cat-match.easygame2021.com/sheep/v1/user/login_oppo?uid=${userInfo.getString("wx_open_id")}&nick_name=${name}&avatar=${avatar}&sex=1"
+    fun token(userInfo: JSONObject, name: String, avatar: String?): String {
+        val url =
+            "https://cat-match.easygame2021.com/sheep/v1/user/login_oppo?uid=${userInfo.getString("wx_open_id")}&nick_name=${name}&avatar=${
+                avatar
+            }&sex=1"
         val body = client.postForObject(url, "", String::class.java)
         return JSON.parseObject(body).getJSONObject("data").getString("token")
     }
